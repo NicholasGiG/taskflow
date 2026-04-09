@@ -3,7 +3,7 @@ package com.taskflow.backend.task;
 import com.taskflow.backend.board.BoardRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -26,7 +26,17 @@ public class TaskService {
         return toResponse(taskRepository.save(task));
     }
 
-    public List<TaskResponse> getByBoard(Long boardId) {
+    public List<TaskResponse> getByBoard(Long boardId, TaskStatus status, TaskPriority priority) {
+        if (status != null && priority != null) {
+            return taskRepository.findByBoardIdAndStatusAndPriority(boardId, status, priority)
+                    .stream().map(this::toResponse).toList();
+        } else if (status != null) {
+            return taskRepository.findByBoardIdAndStatus(boardId, status)
+                    .stream().map(this::toResponse).toList();
+        } else if (priority != null) {
+            return taskRepository.findByBoardIdAndPriority(boardId, priority)
+                    .stream().map(this::toResponse).toList();
+        }
         return taskRepository.findByBoardId(boardId)
                 .stream().map(this::toResponse).toList();
     }
@@ -43,6 +53,15 @@ public class TaskService {
 
     public void delete(Long id) {
         taskRepository.deleteById(id);
+    }
+
+    public TaskStatsResponse getStats(Long boardId) {
+        long total = taskRepository.countByBoardId(boardId);
+        long todo = taskRepository.countByBoardIdAndStatus(boardId, TaskStatus.TODO);
+        long inProgress = taskRepository.countByBoardIdAndStatus(boardId, TaskStatus.IN_PROGRESS);
+        long done = taskRepository.countByBoardIdAndStatus(boardId, TaskStatus.DONE);
+        long overdue = taskRepository.findOverdue(boardId, LocalDate.now()).size();
+        return new TaskStatsResponse(total, todo, inProgress, done, overdue);
     }
 
     private TaskResponse toResponse(Task t) {

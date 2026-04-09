@@ -4,7 +4,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 
 @RestController
@@ -21,8 +20,16 @@ public class TaskController {
     }
 
     @GetMapping
-    public ResponseEntity<List<TaskResponse>> getByBoard(@PathVariable Long boardId) {
-        return ResponseEntity.ok(taskService.getByBoard(boardId));
+    public ResponseEntity<List<TaskResponse>> getByBoard(
+            @PathVariable Long boardId,
+            @RequestParam(required = false) TaskStatus status,
+            @RequestParam(required = false) TaskPriority priority) {
+        return ResponseEntity.ok(taskService.getByBoard(boardId, status, priority));
+    }
+
+    @GetMapping("/stats")
+    public ResponseEntity<TaskStatsResponse> getStats(@PathVariable Long boardId) {
+        return ResponseEntity.ok(taskService.getStats(boardId));
     }
 
     @PutMapping("/{id}")
